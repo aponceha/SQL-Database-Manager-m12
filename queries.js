@@ -1,6 +1,6 @@
 import db from './server.js';
 import cTable from 'console.table';
-
+import * as main from './server.js';
 
 
 export function viewDepartments() {
@@ -8,12 +8,9 @@ export function viewDepartments() {
         if (err) {
             throw err;
         }
-        console.log(''); // empty line
-        console.log(''); // empty line
-        console.log(cTable.getTable(results));
-        for (let i = 0; i < results.length+2; i++) {
-            console.log("");
-        }
+        console.log('\n'); // empty lines
+        console.table(results);
+        main.mainMenu();
     });
 }
 
@@ -22,12 +19,9 @@ export function viewRoles() {
         if (err) {
             throw err;
         }
-        console.log(''); // empty line
-        console.log(''); // empty line
-        console.log(cTable.getTable(results));
-        for (let i = 0; i < results.length; i++) {
-            console.log("");
-        }
+        console.log('\n\n'); // empty lines
+        console.table(results);
+        main.mainMenu();
 });
 }
 
@@ -36,7 +30,8 @@ export function viewEmployees() {
         if (err) {
             throw err;
         }
-        console.log(results);
+        console.table(results);
+        main.mainMenu();
 });
 }
 
@@ -53,12 +48,9 @@ export function viewAllData() {
         if (err) {
             throw err;
         }
-        console.log(''); // empty line
-        console.log(''); // empty line
-        console.log(cTable.getTable(results));
-        for (let i = 0; i < results.length; i++) {
-            console.log("");
-        }
+        console.log('\n'); // empty line
+        console.table(results);
+        main.mainMenu();
 });
 }
 
@@ -71,49 +63,6 @@ export function addDepartment(department) {
         console.log(`Success! ${department.dept_name} has been added to the database!`);
         viewDepartments();
     });
-}
-
-export function addRole(role) {
-    let allDepts = [];
-    const p1 = new Promise((resolve,reject) =>  {
-
-        db.query({sql: `SELECT dept_name, id FROM department`, rowsAsArray: true},(err, results) => {
-        if (err) {
-            throw err;
-        }
-        allDepts = results;
-        console.log('\n 1');
-        
-        resolve("Promise 1 resolved!");
-        });
-        
-    });
-    p1.then((message) => {
-
-        let deptsName = allDepts.map(role => role[0]);
-        let deptsId = allDepts.map(role => role[1]);
-        var dept = null;
-
-            for (let i=0; i<deptsName.length; i++) {
-                if (role.department_id == deptsName[i]) {
-                    dept = deptsId[i];
-                }
-            }
-            db.query(`INSERT INTO roles SET ?`,{
-                title: role.title,
-                salary: role.salary,
-                department_id: dept
-                }, 
-                (err, results) => {
-                if (err) {
-                    throw err;
-                }
-                console.log(''); // empty line
-                console.log(`Success! ${role.title} has been added to the database!`);
-                viewRoles();
-            });
-    });
-
 }
 
 export function addEmployee(employee) {
@@ -135,22 +84,16 @@ export function updateEmployeeRole(employeeId, roleId) {
 });
 }
 
-export function updateEmployeeManager(employeeId, managerId) {
-    db.query(`UPDATE employee SET manager_id = ? WHERE id = ?`,
-        [managerId, employeeId], (err, results) => {
-            if (err) {
-                throw err;
-            }
-            console.table(results);
-    });
-}
-
-export function deleteDepartment(departmentId) {
-    db.query(`DELETE FROM department WHERE id = ?`, departmentId, (err, results) => {
+export function findTeamByManagers(managerId) {
+    db.query(`SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name)AS person, roles.title, department.dept_name AS department, roles.salary, CONCAT(manager.first_name, ' ', manager.last_name) 
+    AS manager, employee.manager_id FROM employee LEFT JOIN roles ON employee.role_id = roles.id LEFT JOIN department ON roles.department_id = 
+    department.id LEFT JOIN employee manager ON manager.id = 
+   employee.manager_id WHERE employee.manager_id IS NOT NULL;`, departmentId, (err, results) => {
         if (err) {
             throw err;
         }
         console.table(results);
+        main.mainMenu();
 });
 }
 
@@ -173,20 +116,28 @@ export function deleteEmployee(employeeId) {
 }
 
 export function viewEmployeesByManager(managerId) {
-    db.query(`SELECT * FROM employee WHERE manager_id = ?`, managerId, (err, results) => {
+    db.query(`SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name)AS person, roles.title, department.dept_name AS department, roles.salary, CONCAT(manager.first_name, ' ', manager.last_name) 
+    AS manager FROM employee LEFT JOIN roles ON employee.role_id = roles.id LEFT JOIN department ON roles.department_id = 
+    department.id LEFT JOIN employee manager ON manager.id = 
+   employee.manager_id WHERE employee.manager_id = ?`, managerId, (err, results) => {
         if (err) {
             throw err;
         }
         console.table(results);
-});
+        main.mainMenu();
+    });
 }
 
 export function viewEmployeesByDepartment(departmentId) {
-    db.query(`SELECT * FROM employee WHERE department_id = ?`, departmentId, (err, results) => {
+    db.query(`SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name)AS person, roles.title, department.dept_name AS department, roles.salary, CONCAT(manager.first_name, ' ', manager.last_name) 
+    AS manager FROM employee LEFT JOIN roles ON employee.role_id = roles.id LEFT JOIN department ON roles.department_id = 
+    department.id LEFT JOIN employee manager ON manager.id = 
+   employee.manager_id WHERE department.id = ?`, departmentId, (err, results) => {
         if (err) {
             throw err;
         }
         console.table(results);
+        main.mainMenu();
 });
 }
 
